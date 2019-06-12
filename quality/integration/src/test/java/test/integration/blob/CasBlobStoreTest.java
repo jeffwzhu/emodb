@@ -57,7 +57,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.TypeLiteral;
-import io.dropwizard.jackson.Jackson;
 import io.dropwizard.server.ServerFactory;
 import io.dropwizard.server.SimpleServerFactory;
 import io.dropwizard.setup.Environment;
@@ -73,7 +72,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nullable;
-import javax.validation.Validation;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -224,7 +222,8 @@ public class CasBlobStoreTest {
         String blobId = UUID.randomUUID().toString();
 
         // get fails initially
-        verifyNotExists(blobId);
+        verifyBlobNotExists(blobId);
+        verifyMetadataNotExists(blobId);
 
         // put some data and verify it, roughly 8MB
         verifyPutAndGet(blobId, randomBytes(0x812345), ImmutableMap.of("encoding", "image/jpeg", "name", "mycat.jpg", "owner", "clover"), Duration.ofHours(1));
@@ -236,7 +235,8 @@ public class CasBlobStoreTest {
         _store.delete(TABLE, blobId);
 
         // get should fail after the delete
-        verifyNotExists(blobId);
+        verifyBlobNotExists(blobId);
+        verifyMetadataNotExists(blobId);
     }
 
     private byte[] randomBytes(int length) {
@@ -245,15 +245,18 @@ public class CasBlobStoreTest {
         return buf;
     }
 
-    private void verifyNotExists(String blobId) {
+    private void verifyBlobNotExists(String blobId) {
         try {
             _store.get(TABLE, blobId);
             fail();
         } catch (BlobNotFoundException e) {
             // expected
         }
+    }
+
+    private void verifyMetadataNotExists(String blobId) {
         try {
-            _store.get(TABLE, blobId);
+            _store.getMetadata(TABLE, blobId);
             fail();
         } catch (BlobNotFoundException e) {
             // expected

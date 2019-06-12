@@ -1,13 +1,10 @@
 package com.bazaarvoice.emodb.blob.db;
 
-import com.bazaarvoice.emodb.common.api.impl.LimitCounter;
 import com.bazaarvoice.emodb.table.db.Table;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.time.Duration;
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * Chunked storage provider based on the Astyanax {@link com.netflix.astyanax.recipes.storage.ChunkedStorageProvider}
@@ -24,15 +21,17 @@ public interface StorageProvider {
 
     ByteBuffer readChunk(Table table, String blobId, int chunkId, long timestamp);
 
-    void deleteObject(Table table, String blobId, Integer chunkCount);
+    /**
+     * will be removed in scope of extracting blob from cassandra.
+     * it's used now as metadata and blob are stored in the same row in table,
+     * so delete operation is performed "transactionally"
+     */
+    @Deprecated
+    void deleteObjectWithMetadata(Table table, String blobId, Integer chunkCount);
 
-    void writeMetadata(Table table, String blobId, StorageSummary summary, @Nullable Duration ttl);
+    void deleteObject(Table table, String blobId);
 
-    StorageSummary readMetadata(Table table, String blobId);
-
-    Iterator<Map.Entry<String, StorageSummary>> scanMetadata(Table table, @Nullable String fromBlobIdExclusive, LimitCounter limit);
-
-    long count(Table table);
+    long countObjects(Table table);
 
     void purge(Table table);
 
